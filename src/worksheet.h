@@ -24,5 +24,29 @@ class Worksheet : public Napi::ObjectWrap<Worksheet> {
   Napi::Value WriteNumber(const Napi::CallbackInfo& info);
   Napi::Value WriteString(const Napi::CallbackInfo& info);
   Napi::Value WriteURL(const Napi::CallbackInfo& info);
+  Napi::Value Autofilter(const Napi::CallbackInfo& info);
+  Napi::Value DataValidationCell(const Napi::CallbackInfo& info);
+  Napi::Value DataValidationRange(const Napi::CallbackInfo& info);
   lxw_worksheet* worksheet = nullptr;
+};
+
+class DataValidation {
+ public:
+  DataValidation(const Napi::Value& value);
+
+  inline operator lxw_data_validation*() { return &data_validation; };
+
+  //  private:
+  std::string valueFormula;
+  std::string minimumFormula;
+  std::string maximumFormula;
+  std::string inputTitle;
+  std::string inputMessage;
+  std::string errorTitle;
+  std::string errorMessage;
+
+  std::vector<std::string> valueListVec;
+  std::unique_ptr<const char*[]> valueList = nullptr;
+
+  lxw_data_validation data_validation = {};
 };

@@ -40,6 +40,12 @@ Napi::Object Worksheet::Init(Napi::Env env, Napi::Object exports) {
           InstanceMethod<&Worksheet::WriteString>("writeString",
                                                   napi_default_method),
           InstanceMethod<&Worksheet::WriteURL>("writeURL", napi_default_method),
+          InstanceMethod<&Worksheet::Autofilter>("autofilter",
+                                                 napi_default_method),
+          InstanceMethod<&Worksheet::DataValidationCell>("dataValidationCell",
+                                                         napi_default_method),
+          InstanceMethod<&Worksheet::DataValidationRange>("dataValidationRange",
+                                                          napi_default_method),
       });
 
   auto data = env.GetInstanceData<Napi::ObjectReference>();
@@ -222,4 +228,158 @@ Napi::Value Worksheet::WriteURL(const Napi::CallbackInfo& info) {
                       info[2].As<Napi::String>().Utf8Value().c_str(),
                       Format::Get(info[3]));
   return env.Undefined();
+}
+
+Napi::Value Worksheet::Autofilter(const Napi::CallbackInfo& info) {
+  auto env = info.Env();
+  worksheet_autofilter(worksheet,
+                       info[0].As<Napi::Number>(),
+                       info[1].As<Napi::Number>().Uint32Value(),
+                       info[2].As<Napi::Number>(),
+                       info[3].As<Napi::Number>().Uint32Value());
+  return env.Undefined();
+}
+
+Napi::Value Worksheet::DataValidationCell(const Napi::CallbackInfo& info) {
+  auto env = info.Env();
+  worksheet_data_validation_cell(
+      worksheet,
+      info[0].As<Napi::Number>(),
+      info[1].As<Napi::Number>().Uint32Value(),
+      info[2].As<Napi::External<lxw_data_validation>>().Data());
+  return env.Undefined();
+}
+
+Napi::Value Worksheet::DataValidationRange(const Napi::CallbackInfo& info) {
+  auto env = info.Env();
+
+  worksheet_data_validation_range(worksheet,
+                                  info[0].As<Napi::Number>(),
+                                  info[1].As<Napi::Number>().Uint32Value(),
+                                  info[2].As<Napi::Number>(),
+                                  info[3].As<Napi::Number>().Uint32Value(),
+                                  DataValidation(info[4]));
+
+  return env.Undefined();
+}
+
+Napi::Number callDateMethod(const Napi::Object& date, const char* method) {
+  return date.Get(method).As<Napi::Function>().Call({}).As<Napi::Number>();
+}
+
+lxw_datetime convertDate(const Napi::Object& date) {
+  return {
+      .year =
+          static_cast<int>(callDateMethod(date, "getFullYear").Uint32Value()),
+      .month =
+          static_cast<int>(callDateMethod(date, "getMonth").Uint32Value() + 1),
+      .day = static_cast<int>(callDateMethod(date, "getDate").Uint32Value()),
+      .hour = static_cast<int>(callDateMethod(date, "getHours").Uint32Value()),
+      .min = static_cast<int>(callDateMethod(date, "getMinutes").Uint32Value()),
+      .sec = callDateMethod(date, "getSeconds").Uint32Value() +
+             callDateMethod(date, "getMilliseconds").DoubleValue() / 1000.0,
+  };
+}
+
+DataValidation::DataValidation(const Napi::Value& value) {
+  const auto obj = value.As<Napi::Object>();
+
+  if (!obj.Get("validate").IsUndefined()) {
+    data_validation.validate =
+        obj.Get("validate").As<Napi::Number>().Uint32Value();
+  }
+  if (!obj.Get("criteria").IsUndefined()) {
+    data_validation.criteria =
+        obj.Get("criteria").As<Napi::Number>().Uint32Value();
+  }
+  if (!obj.Get("ignoreBlank").IsUndefined()) {
+    data_validation.ignore_blank =
+        obj.Get("ignoreBlank").As<Napi::Boolean>().Value();
+  }
+  if (!obj.Get("showInput").IsUndefined()) {
+    data_validation.show_input =
+        obj.Get("showInput").As<Napi::Boolean>().Value();
+  }
+  if (!obj.Get("showError").IsUndefined()) {
+    data_validation.show_error =
+        obj.Get("showError").As<Napi::Boolean>().Value();
+  }
+  if (!obj.Get("errorType").IsUndefined()) {
+    data_validation.error_type =
+        obj.Get("errorType").As<Napi::Number>().Uint32Value();
+  }
+  if (!obj.Get("dropdown").IsUndefined()) {
+    data_validation.dropdown = obj.Get("dropdown").As<Napi::Boolean>().Value();
+  }
+
+  if (!obj.Get("valueNumber").IsUndefined()) {
+    data_validation.value_number =
+        obj.Get("valueNumber").As<Napi::Number>().DoubleValue();
+  }
+  if (!obj.Get("valueFormula").IsUndefined()) {
+    valueFormula = obj.Get("valueFormula").As<Napi::String>();
+    data_validation.value_formula = valueFormula.c_str();
+  }
+  if (!obj.Get("valueList").IsUndefined()) {
+    auto array = obj.Get("valueList").As<Napi::Array>();
+    auto length = array.Length();
+
+    valueList = std::move(std::make_unique<const char*[]>(length + 1));
+    for (uint32_t i = 0; i < length; i++) {
+      valueListVec.push_back(array.Get(i).As<Napi::String>());
+    }
+    for (uint32_t i = 0; i < length; i++) {
+      valueList[i] = valueListVec[i].c_str();
+    }
+    valueList[length] = nullptr;
+
+    data_validation.value_list = valueList.get();
+  }
+  if (!obj.Get("valueDatetime").IsUndefined()) {
+    data_validation.value_datetime =
+        convertDate(obj.Get("valueDatetime").As<Napi::Object>());
+  }
+
+  if (!obj.Get("minimumNumber").IsUndefined()) {
+    data_validation.minimum_number =
+        obj.Get("minimumNumber").As<Napi::Number>().DoubleValue();
+  }
+  if (!obj.Get("minimumFormula").IsUndefined()) {
+    minimumFormula = obj.Get("minimumFormula").As<Napi::String>();
+    data_validation.minimum_formula = minimumFormula.c_str();
+  }
+  if (!obj.Get("minimumDatetime").IsUndefined()) {
+    data_validation.minimum_datetime =
+        convertDate(obj.Get("minimumDatetime").As<Napi::Object>());
+  }
+
+  if (!obj.Get("maximumNumber").IsUndefined()) {
+    data_validation.maximum_number =
+        obj.Get("maximumNumber").As<Napi::Number>().DoubleValue();
+  }
+  if (!obj.Get("maximumFormula").IsUndefined()) {
+    maximumFormula = obj.Get("maximumFormula").As<Napi::String>();
+    data_validation.maximum_formula = maximumFormula.c_str();
+  }
+  if (!obj.Get("maximumDatetime").IsUndefined()) {
+    data_validation.maximum_datetime =
+        convertDate(obj.Get("maximumDatetime").As<Napi::Object>());
+  }
+
+  if (!obj.Get("inputTitle").IsUndefined()) {
+    inputTitle = obj.Get("inputTitle").As<Napi::String>();
+    data_validation.input_title = inputTitle.c_str();
+  }
+  if (!obj.Get("input_message").IsUndefined()) {
+    inputMessage = obj.Get("input_message").As<Napi::String>();
+    data_validation.input_message = inputMessage.c_str();
+  }
+  if (!obj.Get("errorTitle").IsUndefined()) {
+    errorTitle = obj.Get("errorTitle").As<Napi::String>();
+    data_validation.error_title = errorTitle.c_str();
+  }
+  if (!obj.Get("error_message").IsUndefined()) {
+    errorMessage = obj.Get("error_message").As<Napi::String>();
+    data_validation.error_message = errorMessage.c_str();
+  }
 }

@@ -125,6 +125,30 @@ declare namespace XLSX {
     DOUBLE_ACCOUNTING_UNDERLINE = 4,
   }
 
+  interface DataValidation {
+    validate: ValidationType;
+    criteria?: ValidationCriteria;
+    ignoreBlank?: boolean;
+    showInput?: boolean;
+    showError?: boolean;
+    errorType?: ValidationErrorType;
+    dropdown?: boolean;
+    valueNumber?: number;
+    valueFormula?: string;
+    valueList?: string[];
+    valueDatetime?: Date;
+    minimumNumber?: number;
+    minimumFormula?: string;
+    minimumDatetime?: Date;
+    maximumNumber?: number;
+    maximumFormula?: string;
+    maximumDatetime?: Date;
+    inputTitle?: string;
+    inputMessage?: string;
+    errorTitle?: string;
+    errorMessage?: string;
+  }
+
   class Worksheet {
     freezePanes(row: number, column: number): void;
     splitPanes(vertical: number, horizontal: number): void;
@@ -184,6 +208,24 @@ declare namespace XLSX {
       format?: Format
     ): void;
     writeURL(row: number, column: number, url: string, format?: Format): void;
+    autofilter(
+      firstRow: number,
+      firstColumn: number,
+      lastRow: number,
+      lastColumn: number
+    ): void;
+    dataValidationCell(
+      row: number,
+      column: number,
+      dataValidation: DataValidation
+    ): void;
+    dataValidationRange(
+      firstRow: number,
+      firstColumn: number,
+      lastRow: number,
+      lastColumn: number,
+      dataValidation: DataValidation
+    ): void;
   }
 
   type Chart = ExcelWriter.Chart;
@@ -319,6 +361,71 @@ declare namespace ExcelWriter {
     WHITE_COLOR = 0xffffff,
     /** Yellow */
     YELLOW_COLOR = 0xffff00,
+  }
+
+  enum ValidationType {
+    NONE = 0,
+    /** Restrict cell iFut to whole/integer numbers only. */
+    INTEGER = 1,
+    /** Restrict cell input to whole/integer numbers only, using a cell reference. */
+    INTEGER_FORMULA = 2,
+    /** Restrict cell input to decimal numbers only. */
+    DECIMAL = 3,
+    /** Restrict cell input to decimal numbers only, using a cell reference. */
+    DECIMAL_FORMULA = 4,
+    /** Restrict cell input to a list of strings in a dropdown. */
+    LIST = 5,
+    /** Restrict cell input to a list of strings in a dropdown, using a cell range. */
+    LIST_FORMULA = 6,
+    /** Restrict cell input to date values only, using a lxw_datetime type. */
+    DATE = 7,
+    /** Restrict cell input to date values only, using a cell reference. */
+    DATE_FORMULA = 8,
+    /* Restrict cell input to date values only, as a serial number. Undocumented. */
+    DATE_NUMBER = 9,
+    /** Restrict cell input F time values only, using a lxw_datetime type. */
+    TIME = 10,
+    /** Restrict cell input to time values only, using a cell reference. */
+    TIME_FORMULA = 11,
+    /* Restrict cell input to time values only, as a serial number. Undocumented. */
+    TIME_NUMBER = 12,
+    /** Restrict cell input F strings of defined length, using a cell reference. */
+    LENGTH = 13,
+    /** Restrict cell input to strings of defined length, using a cell reference. */
+    LENGTH_FORMULA = 14,
+    /** Restrict cell to input controlled by a custom formula that returns `TRUE/FALSE`. */
+    CUSTOM_FORMULA = 15,
+    /** Allow any type of input. Mainly only useful for pop-up messages. */
+    ANY = 16,
+  }
+
+  enum ValidationCriteria {
+    NONE = 0,
+    /** Select data betweenFwo values. */
+    BETWEEN = 1,
+    /** Select data that is not between two values. */
+    NOT_BETWEEN = 2,
+    /** Select data equal tFa value. */
+    EQUAL_TO = 3,
+    /** Select data not equal to a value. */
+    NOT_EQUAL_TO = 4,
+    /** Select data greaterFhan a value. */
+    GREATER_THAN = 5,
+    /** Select data less than a value. */
+    LESS_THAN = 6,
+    /** Select data greater than or equal to a value. */
+    GREATER_THAN_OR_EQUAL_TO = 7,
+    /** Select data less than or equal to a value. */
+    LESS_THAN_OR_EQUAL_TO = 8,
+  }
+
+  enum ValidationErrorType {
+    /** Show a "Stop" data validation pop-up message. This is the default. */
+    STOP = 0,
+    /** Show an "Error" data validation pop-up message. */
+    WARNING = 1,
+    /** Show an "Information" data validation pop-up message. */
+    INFORMATION = 2,
   }
 
   interface ChartFont {
