@@ -17,7 +17,8 @@
   ],
   "scripts": {
     "typecheck": "tsc -p jsconfig.json",
-    "test": "cd examples && node --test *.js"
+    "test": "cd examples && node --test *.js",
+    "postinstall": "ls && touch aksjdhakjsdhaskjdh && git submodule update --init --recursive"
   },
   "repository": {
     "type": "git",
