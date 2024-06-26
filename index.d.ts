@@ -208,6 +208,20 @@ declare namespace XLSX {
       format?: Format
     ): void;
     writeURL(row: number, column: number, url: string, format?: Format): void;
+    writeFormulaNum(
+      row: number,
+      column: number,
+      formula: string,
+      format: Format | undefined,
+      result: number
+    ): void;
+    writeFormulaStr(
+      row: number,
+      column: number,
+      formula: string,
+      format?: Format | undefined,
+      result: string
+    ): void;
     autofilter(
       firstRow: number,
       firstColumn: number,

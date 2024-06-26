@@ -40,6 +40,10 @@ Napi::Object Worksheet::Init(Napi::Env env, Napi::Object exports) {
           InstanceMethod<&Worksheet::WriteString>("writeString",
                                                   napi_default_method),
           InstanceMethod<&Worksheet::WriteURL>("writeURL", napi_default_method),
+          InstanceMethod<&Worksheet::WriteFormulaNum>("writeFormulaNum",
+                                                      napi_default_method),
+          InstanceMethod<&Worksheet::WriteFormulaStr>("writeFormulaStr",
+                                                      napi_default_method),
           InstanceMethod<&Worksheet::Autofilter>("autofilter",
                                                  napi_default_method),
           InstanceMethod<&Worksheet::DataValidationCell>("dataValidationCell",
@@ -227,6 +231,28 @@ Napi::Value Worksheet::WriteURL(const Napi::CallbackInfo& info) {
                       info[1].As<Napi::Number>().Uint32Value(),
                       info[2].As<Napi::String>().Utf8Value().c_str(),
                       Format::Get(info[3]));
+  return env.Undefined();
+}
+
+Napi::Value Worksheet::WriteFormulaNum(const Napi::CallbackInfo& info) {
+  auto env = info.Env();
+  worksheet_write_formula_num(worksheet,
+                              info[0].As<Napi::Number>(),
+                              info[1].As<Napi::Number>().Uint32Value(),
+                              info[2].As<Napi::String>().Utf8Value().c_str(),
+                              Format::Get(info[3]),
+                              info[4].As<Napi::Number>());
+  return env.Undefined();
+}
+
+Napi::Value Worksheet::WriteFormulaStr(const Napi::CallbackInfo& info) {
+  auto env = info.Env();
+  worksheet_write_formula_str(worksheet,
+                              info[0].As<Napi::Number>(),
+                              info[1].As<Napi::Number>().Uint32Value(),
+                              info[2].As<Napi::String>().Utf8Value().c_str(),
+                              Format::Get(info[3]),
+                              info[4].As<Napi::String>().Utf8Value().c_str());
   return env.Undefined();
 }
 

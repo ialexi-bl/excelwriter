@@ -24,6 +24,8 @@ class Worksheet : public Napi::ObjectWrap<Worksheet> {
   Napi::Value WriteNumber(const Napi::CallbackInfo& info);
   Napi::Value WriteString(const Napi::CallbackInfo& info);
   Napi::Value WriteURL(const Napi::CallbackInfo& info);
+  Napi::Value WriteFormulaNum(const Napi::CallbackInfo& info);
+  Napi::Value WriteFormulaStr(const Napi::CallbackInfo& info);
   Napi::Value Autofilter(const Napi::CallbackInfo& info);
   Napi::Value DataValidationCell(const Napi::CallbackInfo& info);
   Napi::Value DataValidationRange(const Napi::CallbackInfo& info);
